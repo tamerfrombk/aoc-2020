@@ -11,7 +11,7 @@ mkdir $day
 cd $day
 touch input.txt
 
-echo -e "
+echo -e "\
 import System.Environment ( getArgs )
 
 solve1 :: String -> String
