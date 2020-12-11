@@ -25,8 +25,8 @@ solve2 :: String -> String
 solve2 = show . length . filter isValid2 . map toInput . lines
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs ("1":_) = interact solve1 
-mainWithArgs ("2":_) = interact solve2
+mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
+mainWithArgs ("2":_) = interact solve2 >> putChar '\n'
 mainWithArgs _       = error "non-valid argument"
 
 main :: IO ()

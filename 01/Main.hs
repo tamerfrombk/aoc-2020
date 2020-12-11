@@ -4,8 +4,8 @@ main :: IO ()
 main = getArgs >>= mainWithArgs
 
 mainWithArgs :: [String] -> IO ()
-mainWithArgs ("1":_) = interact solve1 
-mainWithArgs ("2":_) = interact solve2
+mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
+mainWithArgs ("2":_) = interact solve2 >> putChar '\n'
 mainWithArgs _       = error "non-valid argument"
 
 solve1 :: String -> String
