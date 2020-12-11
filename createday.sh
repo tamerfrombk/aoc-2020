@@ -12,7 +12,7 @@ cd $day
 touch input.txt
 
 echo -e "
-import System.Environment
+import System.Environment ( getArgs )
 
 solve1 :: String -> String
 solve1 = undefined
