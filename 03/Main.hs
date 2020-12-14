@@ -48,7 +48,7 @@ solve2 input = show $ product [
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
 mainWithArgs ("2":_) = interact solve2 >> putChar '\n'
-mainWithArgs _       = error "non-valid argument"
+mainWithArgs _       = error "invalid argument"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs

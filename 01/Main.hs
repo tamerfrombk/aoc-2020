@@ -6,7 +6,7 @@ main = getArgs >>= mainWithArgs
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
 mainWithArgs ("2":_) = interact solve2 >> putChar '\n'
-mainWithArgs _       = error "non-valid argument"
+mainWithArgs _       = error "invalid argument"
 
 solve1 :: String -> String
 solve1 input = show $ f $ map read $ lines input 
