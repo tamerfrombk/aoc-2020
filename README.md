@@ -3,28 +3,29 @@
 This repo contains the solutions I used to solve the [Advent Of Code](https://adventofcode.com/2020) puzzles.
 
 ### Building
-Each directory corresponds to a AOC day containing the solutions to that day's puzzles.
+Each directory inside of `src` corresponds to a AOC day containing the solutions to that day's puzzles.
+Each executable module is named `aoc2020-<day_number>` where `<day_number>` is the day of the AoC.
 
-To build a specific day:
+To build a specific day's solution:
 
 ```sh
-# build day one
-make 01
+cabal build aoc2020-<day_number>
 ```
 
 OR
 
-```sh
-# build everything at once
-make
-```
+to build all days at once:
 
-This will generate an executable in the day's directory with the same name as the day. For example, day 1's directory is `01` and the executable is called `01`.
+```sh
+cabal build
+```
 
 ### Running
 
-All executables follow the same convention: they read all of input from stdin at once and require a single numeric argument describing which puzzle to solve. For example, assuming that the input is in a file called `input.txt`, to solve the 1st problem of the 2nd day, run:
+All executables follow the same convention: they read all of input from stdin at once and require a single numeric argument 
+describing which puzzle to solve. For example, assuming that the input is in a file called `input.txt`, to solve the 
+1st problem of the 2nd day, run:
 
 ```sh
-./02 1 < input.txt
+cabal run aoc2020-2 -- 1 < input.txt
 ```
