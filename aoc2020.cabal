@@ -55,3 +55,4 @@ executable aoc2020-5
     build-depends:    base ^>=4.14.1.0
     hs-source-dirs:   src/05
     default-language: Haskell2010
+
