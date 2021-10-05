@@ -5,11 +5,16 @@ if [ "$#" -ne "1" ]; then
     exit 1
 fi
 
-day="$1"
+USER_DAY="$1"
+DAY="0${USER_DAY}"
+DAY_DIR="./src/${DAY}"
+DAY_MAIN="${DAY_DIR}/Main.hs"
+DAY_INPUT="${DAY_DIR}/input.txt"
 
-mkdir $day 
-cd $day
-touch input.txt
+set -e
+
+mkdir -p $DAY_DIR
+touch $DAY_INPUT
 
 echo -e "\
 import System.Environment ( getArgs )
@@ -27,6 +32,16 @@ mainWithArgs _       = error \"invalid argument\"
 
 main :: IO ()
 main = getArgs >>= mainWithArgs
-" > Main.hs
+" > $DAY_MAIN
 
-git add ..
+echo -e "\
+executable aoc2020-$USER_DAY
+    main-is:        Main.hs
+    
+    build-depends:    base ^>=4.14.1.0
+    hs-source-dirs:   src/$DAY
+    default-language: Haskell2010
+
+" >> aoc2020.cabal
+
+git add .
