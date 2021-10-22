@@ -1,5 +1,5 @@
 import System.Environment ( getArgs )
-import Data.Char ( isDigit )
+import qualified Data.Map as M
 
 data Bag = Bag {
     description :: String,
@@ -9,28 +9,20 @@ data Bag = Bag {
 instance Eq Bag where
     b1 == b2 = (description b1) == (description b2)
 
-digit :: String -> Int
-digit s = if isDigit $ head s
-          then read s
-          else error (s ++ " is not a digit")
+type Cache = M.Map String Bag
 
-findBag :: [Bag] -> String -> Bag
-findBag (b:bs) desc
-    | desc == description b = b
-    | otherwise             = findBag bs desc
-findBag _    []             = error "bag must be here"
+makeCache :: String -> Cache
+makeCache = foldr (\b m -> M.insert (description b) b m) M.empty . map (makeBag . words) . lines
 
-removeBag :: Bag -> [Bag] -> [Bag]
-removeBag b (bb:bs)
-    | b == bb   = bs
-    | otherwise = bb : removeBag b bs
-removeBag _ []  = []
+findBag :: Cache -> String -> Bag
+findBag cache desc = case M.lookup desc cache of
+    Just x -> x
+    Nothing -> error $ "bag " ++ desc ++ " is supposed to be in the cache"
 
-hasBagOf :: String -> Bag -> [Bag] -> Bool
-hasBagOf desc bag cache
-    | description bag == desc = True
-    | (null . children) bag   = False
-    | otherwise               = any (\b -> hasBagOf desc b cache) $ map (findBag cache) $ map fst $ children bag
+hasBagOf :: String -> Bag -> Cache -> Bool
+hasBagOf desc (Bag d cs) cache
+    | d == desc = True
+    | otherwise = any (flip (hasBagOf desc) cache . findBag cache . fst) cs
 
 makeBag :: [String] -> Bag
 makeBag ws = let
@@ -42,23 +34,30 @@ makeBag ws = let
 
           makeChildren :: [String] -> [(String, Int)]
           makeChildren ["no","other","bags."] = []
-          makeChildren (n:desc)               = (makeDescription desc, digit n) : makeChildren (drop 3 desc)
+          makeChildren (n:desc)               = (makeDescription desc, read n) : makeChildren (drop 3 desc)
           makeChildren []                     = []
 
 solve1 :: String -> String
-solve1 s = show . (\x -> x - 1) . sum . map boolToInt . map hasGolden $ cache
-         where  hasGolden :: Bag -> Bool
-                hasGolden b = hasBagOf "shiny gold" b cache
+solve1 s = show . (\x -> x - 1) . sum . map (fromEnum . hasGolden) $ M.elems $ cache
+    where   hasGolden :: Bag -> Bool
+            hasGolden b = hasBagOf "shiny gold" b cache
 
-                boolToInt :: Bool -> Int
-                boolToInt x = if x == True then 1 else 0
+            cache :: Cache
+            cache = makeCache s
 
-                cache :: [Bag]
-                cache = map (makeBag . words) $ lines s
+bagCount :: Bag -> Cache -> Int
+bagCount (Bag d cs) cache = sum $ map go cs
+    where   go :: (String, Int) -> Int
+            go (s,n) = n + (n * count (findBag cache s))
 
+            count :: Bag -> Int
+            count = (flip bagCount) cache
+
+goldenCount :: Cache -> Int
+goldenCount cache = bagCount (findBag cache "shiny gold") cache
 
 solve2 :: String -> String
-solve2 = undefined
+solve2 = show . goldenCount . makeCache
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
