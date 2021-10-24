@@ -115,7 +115,7 @@ isPositiveNop (Nop _ x) = x > 0
 isPositiveNop _         = False
 
 transform :: Program -> [Program]
-transform p = map (\i -> placeAt p (line i - 1) i) $ map swap $ filter pred $ ix p
+transform p = map ((\i -> placeAt p (line i - 1) i) . swap) (filter pred $ ix p)
     where pred i = isNegativeJump i || isPositiveNop i
 
 solve2 :: String -> String
