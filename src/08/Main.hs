@@ -23,7 +23,12 @@ data Program = Program {
     ix      :: [Instruction]
     , accum :: Int
     , pc    :: Int
-} | Done Int deriving Show
+} | Done Int | Success Int deriving Show
+
+accum' :: Program -> Int
+accum' (Done v)    = v
+accum' (Success v) = v
+accum' p           = accum p
 
 acc :: Program -> Int -> Program
 acc (Program ix a pc) delta = Program ix (a + delta) (pc + 1)
@@ -37,8 +42,12 @@ nop (Program ix a pc) = Program ix a (pc + 1)
 fetch :: Program -> Int -> Instruction
 fetch p line = ix p !! (line - 1)
 
-put :: Program -> Instruction -> Program
-put (Program ix acc pc) i = Program (i:ix) acc pc
+placeAt :: Program -> Int -> Instruction -> Program
+placeAt (Program ix a pc) at i = Program (placeAt' at i ix) a pc
+    where placeAt' a' i' xs = let (left, right) = splitAt a' xs
+                              in left ++ [i'] ++ tail' right
+                              where tail' [] = []
+                                    tail' xs = tail xs
 
 exe :: Program -> Instruction -> Program
 exe p (Acc  _ v) = acc p v
@@ -47,22 +56,26 @@ exe p (Nop  _ _) = nop p
 
 step :: [Int] -> Program -> ([Int], Program)
 step visited p
-    | ip `elem` visited = (visited, Done a)
-    | otherwise         = (line i : visited, exe p i)
+    | ip == (length . ix) p + 1 = (visited, Success a)
+    | ip `elem` visited         = (visited, Done a)
+    | otherwise                 = (line i : visited, exe p i)
     where ip = pc p
           i  = fetch p ip
           a  = accum p
 
 stepN :: Int -> Program -> ([Int], Program)
 stepN = go []
-    where go xs 0 p = (xs, p)
-          go xs n p = let (xs', p') = step xs p in go xs' (n - 1) p'
+    where go xs n p
+            | n == 0    = (xs, p)
+            | otherwise = let (xs', p') = step xs p
+                          in go xs' (n - 1) p'
 
-run :: Program -> Int
+run :: Program -> Program
 run = go []
-    where go _ (Done l) = l
-          go visited p  = let (visited', p') = step visited p
-                          in go visited' p'
+    where go _ (Done v)    = Done v
+          go _ (Success v) = Success v
+          go visited p     = let (visited', p') = step visited p
+                             in go visited' p'
 
 makeProgram :: String -> Program
 makeProgram s = Program { ix = ixs, accum = 0, pc = 1 }
@@ -74,7 +87,7 @@ makeInstruction line s = go $ words s
           go (name:arg:_)
             | name == "acc" = Acc  line (makeArg arg)
             | name == "jmp" = Jump line (makeArg arg)
-            | name == "nop" = Nop  line 0 -- we don't care about the argument to nop
+            | name == "nop" = Nop  line (makeArg arg)
             | otherwise     = error $ name ++ " is not a valid instruction"
           go _              = error $ "invalid instruction syntax at line " ++ show line
 
@@ -86,10 +99,29 @@ makeInstruction line s = go $ words s
             | otherwise   = error $ "unable to make arg: " ++ show (sign:n:rest)
 
 solve1 :: String -> String
-solve1 = show . run . makeProgram
+solve1 = show . accum' . run . makeProgram
+
+swap :: Instruction -> Instruction
+swap (Nop a b)  = Jump a b
+swap (Jump a b) = Nop a b
+swap x          = x
+
+isNegativeJump :: Instruction -> Bool
+isNegativeJump (Jump _ x) = x <= 0
+isNegativeJump _          = False
+
+isPositiveNop :: Instruction -> Bool
+isPositiveNop (Nop _ x) = x > 0
+isPositiveNop _         = False
+
+transform :: Program -> [Program]
+transform p = map (\i -> placeAt p (line i - 1) i) $ map swap $ filter pred $ ix p
+    where pred i = isNegativeJump i || isPositiveNop i
 
 solve2 :: String -> String
-solve2 = undefined
+solve2 = show . accum' . head . filter isSuccess . map run . transform . makeProgram
+    where isSuccess (Success _) = True
+          isSuccess _           = False
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
