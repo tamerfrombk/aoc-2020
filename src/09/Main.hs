@@ -5,10 +5,6 @@ preamble n i xs
     | i <= n    = take i xs
     | otherwise = take n $ drop (i - n) xs
 
-preamble5, preamble25 :: Int -> [Int] -> [Int]
-preamble5  = preamble 5
-preamble25 = preamble 25
-
 isValid :: Int -> [Int] -> Bool
 isValid n ns = any (\(a, b) -> a + b == n) $ pairs ns
     where pairs :: [Int] -> [(Int, Int)]
@@ -17,16 +13,32 @@ isValid n ns = any (\(a, b) -> a + b == n) $ pairs ns
 toNums :: String -> [Int]
 toNums = map (\x -> read x :: Int) . lines
 
-solve1 :: String -> String
-solve1 s = show $ fst $ head
+sumsOf :: Int -> [Int] -> [[Int]]
+sumsOf l xs = filter (\ns -> length ns == l)
+    $ map (\(i, _) -> preamble l i xs)
+    $ zip [0..] xs
+
+firstInvalid :: [Int] -> Int
+firstInvalid ns = fst $ head
     $ filter (not . uncurry isValid)
     $ filter (\(_, ns) -> length ns == 25)
-    $ map (\(i, n) -> (n, preamble25 i ns)) ins
+    $ map (\(i, n) -> (n, preamble 25 i ns)) ins
     where ins = zip [0..] ns
-          ns  = toNums s
+
+solve1 :: String -> String
+solve1 = show . firstInvalid . toNums
+
+weakness :: [Int] -> Int
+weakness ns = minimum ns + maximum ns
+
+contiguousSumTo :: Int -> [Int] -> [Int]
+contiguousSumTo target xs = head $ concat
+    $ map (\vs -> filter (\v -> sum v == target) vs)
+    $ filter (elem target . map sum)
+    $ zipWith (\i _ -> sumsOf i xs) [2..length xs] xs
 
 solve2 :: String -> String
-solve2 = undefined
+solve2 = show  . weakness . contiguousSumTo 373803594 . toNums
 
 mainWithArgs :: [String] -> IO ()
 mainWithArgs ("1":_) = interact solve1 >> putChar '\n'
